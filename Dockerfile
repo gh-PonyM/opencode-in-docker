@@ -88,6 +88,8 @@ RUN mkdir -p /home/$USERNAME/.local/share/opencode && \
     chown -R $USERNAME:$USERNAME /home/$USERNAME/.config/opencode && \
     npm i -g opencode-ai
 
+COPY configs/* /home/$USERNAME/.config/opencode/
+
 # Copy and set up entrypoint
 COPY --chmod=0755 entrypoint.sh /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
