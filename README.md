@@ -14,7 +14,7 @@ An example shell script is provided to run the container:
 
 ### Configuration
 
-- `OPENCODE_DOTFILES_LOCAL`: If your local `~/.config/opencode` file are symlinks into a dotfiles repos, set this variable.
+- `OPENCODE_DOTFILES_LOCAL`: If your local `~/.config/opencode` contain symlinks to dotfiles repos, set this variable.
 
 ## Inspirations
 
