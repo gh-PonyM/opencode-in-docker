@@ -29,6 +29,23 @@ run-opencode() {
     else
         wd="/home/$USERNAME/Repos/$REPO_NAME"
     fi
+
+    local OPENCODE_MOUNT_ARGS=()
+    if [[ -n "${OPENCODE_DOTFILES_LOCAL:-}" ]]; then
+        local DOTFILES_LOCAL="$OPENCODE_DOTFILES_LOCAL"
+        local DOTFILES_CONTAINER_PATH
+        if [[ "$DOTFILES_LOCAL" == "$HOME"* ]]; then
+            # Preserve relative structure under /home/$USERNAME
+            local rel_path="${DOTFILES_LOCAL#$HOME/}"
+            DOTFILES_CONTAINER_PATH="/home/$USERNAME/$rel_path"
+        else
+            # Fallback location for non-$HOME paths
+            DOTFILES_CONTAINER_PATH=$OPENCODE_DOTFILES_LOCAL
+        fi
+        OPENCODE_MOUNT_ARGS+=(
+            -v "$DOTFILES_LOCAL:$DOTFILES_CONTAINER_PATH:ro"
+        )
+    fi
     docker run -it --rm \
         --name "$CONTAINER_NAME" \
         -h "$C_HOSTNAME" \
@@ -39,9 +56,9 @@ run-opencode() {
         -e GIT_USER_NAME="$GIT_USER_NAME" \
         -e GIT_USER_EMAIL="$GIT_USER_EMAIL" \
         -v "$PROJECT_PATH:$wd" \
-        -v "$HOME/dotfiles:/home/$USERNAME/dotfiles:ro" \
         -v "$HOME/.config/opencode:/home/$USERNAME/.config/opencode:ro" \
         -v "$HOME/.local/state/opencode:/home/$USERNAME/.local/state/opencode:rw" \
+        "${OPENCODE_MOUNT_ARGS[@]}" \
         "$IMAGE_NAME"
 }
 
