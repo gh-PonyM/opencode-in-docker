@@ -54,8 +54,7 @@ RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhisto
 
 USER $USERNAME
 
-COPY --chown=$USERNAME:$USERNAME .bashrc /home/$USERNAME/.bashrc
-COPY --chown=$USERNAME:$USERNAME .zshrc /home/$USERNAME/.zshrc
+COPY --chown=$USERNAME:$USERNAME shell-config/* /home/$USERNAME/
 
 # fzf install --all will configure zsh and bashrc
 ARG ZSH_IN_DOCKER_VERSION=1.2.0
