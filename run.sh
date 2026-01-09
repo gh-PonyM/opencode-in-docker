@@ -46,6 +46,9 @@ run-opencode() {
             -v "$DOTFILES_LOCAL:$DOTFILES_CONTAINER_PATH:ro"
         )
     fi
+    local LOCAL_AUTH_DIR="$HOME/.local/share/opencode"
+    # to run /connect within the container if not ANTHROPIC_API_KEY or OPENROUTER_API_KEY is used, e.g. for Github Copilot
+    mkdir -p "$LOCAL_AUTH_DIR"
     docker run -it --rm \
         --name "$CONTAINER_NAME" \
         -h "$C_HOSTNAME" \
@@ -58,6 +61,7 @@ run-opencode() {
         -v "$PROJECT_PATH:$wd" \
         -v "$HOME/.config/opencode:/home/$USERNAME/.config/opencode:ro" \
         -v "$HOME/.local/state/opencode:/home/$USERNAME/.local/state/opencode:rw" \
+        -v "$LOCAL_AUTH_DIR:/home/$USERNAME/.local/share/opencode:rw" \
         "${OPENCODE_MOUNT_ARGS[@]}" \
         "$IMAGE_NAME"
 }

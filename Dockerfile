@@ -5,6 +5,10 @@ FROM ${BASE_IMAGE}
 ARG USERNAME=ubuntu
 ARG SHELL=/bin/bash
 ENV DEBIAN_FRONTEND=noninteractive
+ARG TZ=Europe/Berlin
+
+ENV DEBIAN_FRONTEND=noninteractive \
+  TZ="$TZ"
 
 # Install git, GNU utils, and other essential tools
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
