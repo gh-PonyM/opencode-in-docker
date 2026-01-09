@@ -21,8 +21,14 @@ run-opencode() {
     local GIT_USER_NAME="$(git config user.name 2>/dev/null || echo '')"
     local GIT_USER_EMAIL="$(git config user.email 2>/dev/null || echo '')"
 
-    # Build docker run command
-    local wd="/home/$USERNAME/Repos/$REPO_NAME"
+    local wd
+    if [[ "$PROJECT_PATH" == "$HOME"* ]]; then
+        # Strip $HOME prefix and construct container path
+        local rel_path="${PROJECT_PATH#$HOME/}"
+        wd="/home/$USERNAME/$rel_path"
+    else
+        wd="/home/$USERNAME/Repos/$REPO_NAME"
+    fi
     docker run -it --rm \
         --name "$CONTAINER_NAME" \
         -h "$C_HOSTNAME" \
