@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+PROJECT_DIR=${2:-.}
+MAX_ITERATIONS=${3:-10}
+
+SCRIPT_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+
+PRD_FILE="$PROJECT_DIR/prd.json"
+PROMPT_FILE="$PROJECT_DIR/prompt.md"
+PROGRESS_FILE="$PROJECT_DIR/progress.txt"
+ARCHIVE_DIR="$PROJECT_DIR/archive"
+LAST_BRANCH_FILE="$PROJECT_DIR/.last-branch"
+OPENCODER_AGENT=${OPENCODER_AGENT:-build}
+OPENCODER_TEMPLATES=$OPENCODER_ROOT/templates
+
+export OPENCODE_CONFIG="$PROJECT_DIR/$OPENCODER_CONFIG"
+
+start() {
+  # Archive previous run if branch changed
+  if [ -f "$PRD_FILE" ] && [ -f "$LAST_BRANCH_FILE" ]; then
+    CURRENT_BRANCH=$(jq -r '.branchName // empty' "$PRD_FILE" 2>/dev/null || echo "")
+    LAST_BRANCH=$(cat "$LAST_BRANCH_FILE" 2>/dev/null || echo "")
+
+    if [ -n "$CURRENT_BRANCH" ] && [ -n "$LAST_BRANCH" ] && [ "$CURRENT_BRANCH" != "$LAST_BRANCH" ]; then
+      # Archive the previous run
+      DATE=$(date +%Y-%m-%d)
+      # Strip "opencoder/" prefix from branch name for folder
+      FOLDER_NAME=$(echo "$LAST_BRANCH" | sed 's|^opencoder/||')
+      ARCHIVE_FOLDER="$ARCHIVE_DIR/$DATE-$FOLDER_NAME"
+
+      echo "Archiving previous run: $LAST_BRANCH"
+      mkdir -p "$ARCHIVE_FOLDER"
+      [ -f "$PRD_FILE" ] && cp "$PRD_FILE" "$ARCHIVE_FOLDER/"
+      [ -f "$PROGRESS_FILE" ] && cp "$PROGRESS_FILE" "$ARCHIVE_FOLDER/"
+      echo "   Archived to: $ARCHIVE_FOLDER"
+
+      # Reset progress file for new run
+      echo "# Opencoder Progress Log" > "$PROGRESS_FILE"
+      echo "Started: $(date)" >> "$PROGRESS_FILE"
+      echo "---" >> "$PROGRESS_FILE"
+    fi
+  fi
+
+  # Track current branch
+  if [ -f "$PRD_FILE" ]; then
+    CURRENT_BRANCH=$(jq -r '.branchName // empty' "$PRD_FILE" 2>/dev/null || echo "")
+    if [ -n "$CURRENT_BRANCH" ]; then
+      echo "$CURRENT_BRANCH" > "$LAST_BRANCH_FILE"
+    fi
+  fi
+
+  # Initialize progress file if it doesn't exist
+  if [ ! -f "$PROGRESS_FILE" ]; then
+    echo "# Opencoder Progress Log" > "$PROGRESS_FILE"
+    echo "Started: $(date)" >> "$PROGRESS_FILE"
+    echo "---" >> "$PROGRESS_FILE"
+  fi
+
+  echo "Starting Opencoder - Max iterations: $MAX_ITERATIONS"
+
+  for i in $(seq 1 $MAX_ITERATIONS); do
+    echo ""
+    echo "═══════════════════════════════════════════════════════"
+    echo "  Opencoder Iteration $i of $MAX_ITERATIONS"
+    echo "═══════════════════════════════════════════════════════"
+
+    # Run opencode with the opencoder prompt
+    OUTPUT=$(opencode run -f "$PROMPT_FILE" --agent $OPENCODER_AGENT 2>&1 | tee /dev/stderr) || true
+
+    # Check for completion signal
+    if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
+      echo ""
+      echo "Opencoder completed all tasks!"
+      echo "Completed at iteration $i of $MAX_ITERATIONS"
+      exit 0
+    fi
+
+    echo "Iteration $i complete. Continuing..."
+    sleep 2
+  done
+
+  echo ""
+  echo "Opencoder reached max iterations ($MAX_ITERATIONS) without completing all tasks."
+  echo "Check $PROGRESS_FILE for status."
+  exit 1
+}
+
+init() {
+  if [ ! -f "$PROMPT_FILE" ]; then
+    cp "$OPENCODER_TEMPLATES/prompt.md" "$PROMPT_FILE"
+  fi
+  cp -r $OPENCODER_TEMPLATES/.opencode "${PROJECT_DIR}/"
+  mv "${PROJECT_DIR}/.opencode/$OPENCODER_CONFIG" "${PROJECT_DIR}/.opencode/opencode.jsonc"
+  echo "Preparations for start opencoder"
+  opencode --agent plan --prompt "Load the prd skill and create a PRD"
+}
+
+"$1"

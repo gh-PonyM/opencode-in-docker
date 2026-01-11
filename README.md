@@ -21,3 +21,4 @@ An example shell script is provided to run the container:
 - https://github.com/anthropics/claude-code/tree/main/.devcontainer
 - https://agileweboperations.com/2025/11/23/how-to-run-opencode-ai-in-a-docker-container/
 - https://github.com/junegunn/fzf?tab=readme-ov-file#using-git
+- https://github.com/snarktank/ralph/tree/main

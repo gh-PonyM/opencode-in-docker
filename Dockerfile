@@ -7,6 +7,17 @@ ARG SHELL=/bin/bash
 ENV DEBIAN_FRONTEND=noninteractive
 ARG TZ=Europe/Berlin
 
+ARG OPENCODE_VERSION=1.1.6
+
+# Set as OPENCODE_CONFIG inside the container set to the users default
+ARG OPENCODE_DEFAULT_CONFIG=opencode.jsonc
+
+# Config to use for the opencoder cli, it is copied into the repo folder on project init
+ARG OPENCODER_CONFIG_TEMPLATE=opencoder.jsonc
+# Agent to use for the opencoder, must exist in the OPENCODER_CONFIG_TEMPLATE config
+ARG OPENCODER_AGENT=build
+ARG GLOBAL_OPENCODE_CONFIG_SRC_DIR=configs
+
 ENV DEBIAN_FRONTEND=noninteractive \
   TZ="$TZ"
 
@@ -76,8 +87,12 @@ RUN git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && \
 ENV EDITOR=nano \
   VISUAL=nano \
   NPM_CONFIG_PREFIX=/usr/local/share/npm-global \
-  PATH=$PATH:/usr/local/share/npm-global/bin \
-  SHELL=$SHELL
+  PATH=$PATH:/usr/local/share/npm-global/bin:/home/$USERNAME/.local/bin \
+  SHELL=$SHELL \
+  OPENCODE_CONFIG=$OPENCODE_DEFAULT_CONFIG \
+  OPENCODER_AGENT=$OPENCODER_AGENT \
+  OPENCODER_ROOT=/home/$USERNAME/opencoder \
+  OPENCODER_CONFIG=$OPENCODER_CONFIG_TEMPLATE
 
 # -- OpenCode Config
 # Create the directory structure for the auth file and config and fix ownership
@@ -89,9 +104,12 @@ RUN mkdir -p /home/$USERNAME/.local/share/opencode && \
     chown -R $USERNAME:$USERNAME /home/$USERNAME/.local/share/opencode && \
     mkdir -p /home/$USERNAME/.config/opencode && \
     chown -R $USERNAME:$USERNAME /home/$USERNAME/.config/opencode && \
-    npm i -g opencode-ai
+    npm i -g opencode-ai@$OPENCODE_VERSION
 
-COPY configs/* /home/$USERNAME/.config/opencode/
+COPY --chown=$USERNAME:$USERNAME $GLOBAL_OPENCODE_CONFIG_SRC_DIR/* /home/$USERNAME/.config/opencode/
+COPY --chown=$USERNAME:$USERNAME opencoder $OPENCODER_ROOT
+RUN mkdir -p /home/$USERNAME/.local/bin && \
+  ln -s $OPENCODER_ROOT/scripts/opencoder /home/$USERNAME/.local/bin/opencoder
 
 # Copy and set up entrypoint
 COPY --chmod=0755 entrypoint.sh /usr/local/bin/entrypoint.sh

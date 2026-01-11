@@ -42,6 +42,7 @@ run-opencode() {
             # Fallback location for non-$HOME paths
             DOTFILES_CONTAINER_PATH=$OPENCODE_DOTFILES_LOCAL
         fi
+        echo "Including your dotfiles as folder mount: $DOTFILES_LOCAL:$DOTFILES_CONTAINER_PATH"
         OPENCODE_MOUNT_ARGS+=(
             -v "$DOTFILES_LOCAL:$DOTFILES_CONTAINER_PATH:ro"
         )
@@ -66,4 +67,4 @@ run-opencode() {
         "$IMAGE_NAME"
 }
 
-run-opencode
+run-opencode "$@"

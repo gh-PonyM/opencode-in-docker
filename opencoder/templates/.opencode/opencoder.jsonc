@@ -1,0 +1,26 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "*": "allow"
+  },
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "DUMMY VALUE -right now not (yet) required"
+      },
+      "enabled": true
+    }
+  },
+  "agent": {
+    "build": {
+      "mode": "primary",
+      "model": "openrouter/anthropic/claude-sonnet-4.5"
+    },
+    "plan": {
+      "mode": "primary",
+      "model": "openrouter/anthropic/claude-sonnet-4.5"
+    }
+  }
+}
